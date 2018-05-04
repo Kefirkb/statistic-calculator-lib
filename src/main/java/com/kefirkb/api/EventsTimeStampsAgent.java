@@ -1,5 +1,7 @@
 package com.kefirkb.api;
 
+import java.time.Clock;
+
 /**
  * @author Sergey
  * @since 04.05.2018
@@ -31,4 +33,8 @@ public interface EventsTimeStampsAgent {
      * @return count of considering events
      */
     long countEventsByLastDay();
+
+    static EventsTimeStampsAgent instance(Clock clock, EventsTimeStampRepository repository) {
+        return new EventsTimeStampsAgentImpl(clock, repository);
+    }
 }

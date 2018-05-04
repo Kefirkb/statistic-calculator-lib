@@ -1,6 +1,7 @@
 package com.kefirkb.api;
 
 import java.io.Closeable;
+import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -21,5 +22,16 @@ public interface EventsTimeStampRepository extends Closeable {
      * @param unit chrono unit of period
      * @return count of events
      */
-    long getCountByChronoUnit(ChronoUnit unit);
+    long getCountOfLastByChronoUnit(ChronoUnit unit, Clock clock);
+
+    @Override
+    void close();
+
+    /**
+     * In memory storage for timestamps
+     * @return instance of repository
+     */
+    static EventsTimeStampRepository inMemoryRepository() {
+        return new InMemoryEventsTimeStampRepository();
+    }
 }
