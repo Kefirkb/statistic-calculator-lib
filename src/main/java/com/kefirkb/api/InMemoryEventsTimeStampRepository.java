@@ -1,10 +1,10 @@
 package com.kefirkb.api;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -13,19 +13,19 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @since 04.05.2018.
  */
 final class InMemoryEventsTimeStampRepository implements EventsTimeStampRepository {
-    private final PriorityBlockingQueue<Long> timeStampStorage = new PriorityBlockingQueue<>();
+    private final PriorityBlockingQueue<Long> timeStampStorage = new PriorityBlockingQueue<>(11, Comparator.reverseOrder());
 
     InMemoryEventsTimeStampRepository() {
     }
 
     @Override
     public void store(Long timeStamp) {
-        timeStampStorage.put(timeStamp);
+        timeStampStorage.add(timeStamp);
     }
 
     @Override
     public synchronized long getCountOfLastByChronoUnit(ChronoUnit unit, Clock clock) {
-        if(unit != ChronoUnit.MINUTES && unit != ChronoUnit.DAYS && unit != ChronoUnit.HOURS) {
+        if (unit != ChronoUnit.MINUTES && unit != ChronoUnit.DAYS && unit != ChronoUnit.HOURS) {
             throw new UnsupportedOperationException("Only last minute, hour and day is supported");
         }
 
@@ -37,19 +37,23 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
 
     }
 
+    long getContainerCount() {
+        return timeStampStorage.size();
+    }
+
     private long countBy(ChronoUnit unit, Clock clock) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        long lastByChronoTimeStamp = now.toInstant(ZoneOffset.UTC).minus(1, unit).toEpochMilli();
+        Instant instantNow = clock.instant();
+        Instant instantChronoBefore = instantNow.minus(1, unit);
         List<Long> buffer = new ArrayList<>();
         Long lastTimeStamp = timeStampStorage.peek();
 
-        if(lastTimeStamp > lastByChronoTimeStamp) {
-            while(lastTimeStamp != null && lastTimeStamp > lastByChronoTimeStamp) {
-                lastTimeStamp = timeStampStorage.poll();
-                buffer.add(lastTimeStamp);
+        if (lastTimeStamp != null && Instant.ofEpochMilli(lastTimeStamp).isAfter(instantChronoBefore)) {
+            do {
+                buffer.add(timeStampStorage.poll());
+                lastTimeStamp = timeStampStorage.peek();
             }
+            while (lastTimeStamp != null && Instant.ofEpochMilli(lastTimeStamp).isAfter(instantChronoBefore));
         }
-
         timeStampStorage.addAll(buffer);
         return buffer.size();
     }
