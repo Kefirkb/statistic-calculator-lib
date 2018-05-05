@@ -1,0 +1,6 @@
+
+/.idea/
+!/.idea/runConfigurations/
+/out/
+/gradle/
+/.gradle/
