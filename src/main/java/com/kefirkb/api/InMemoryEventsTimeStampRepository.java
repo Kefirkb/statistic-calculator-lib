@@ -3,12 +3,14 @@ package com.kefirkb.api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotNull;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 /**
@@ -25,21 +27,22 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
 
     private volatile CountDownLatch latchForDelete = new CountDownLatch(0);
 
-    InMemoryEventsTimeStampRepository(Clock clock, long clearingPeriod) {
+    InMemoryEventsTimeStampRepository(@NotNull Clock clock, long clearingPeriod) {
+        this.clock = Objects.requireNonNull(clock);
         assert clearingPeriod > 0;
-        this.clock = clock;
         scheduledExecutorService.scheduleAtFixedRate(getDeleteTask(clock), clearingPeriod, clearingPeriod, TimeUnit.SECONDS);
     }
 
-    InMemoryEventsTimeStampRepository(Clock clock, boolean withScheduledClearing) {
-        this.clock = clock;
+    InMemoryEventsTimeStampRepository(@NotNull Clock clock, boolean withScheduledClearing) {
+        this.clock = Objects.requireNonNull(clock);
         if (withScheduledClearing) {
             scheduledExecutorService.scheduleAtFixedRate(getDeleteTask(clock), DEFAULT_CLEANING_PERIOD, DEFAULT_CLEANING_PERIOD, TimeUnit.SECONDS);
         }
     }
 
     @Override
-    public void store(Long timeStamp) {
+    public void store(@NotNull Long timeStamp) {
+        Objects.requireNonNull(timeStamp, "timeStamp must be not null");
         try {
             latchForDelete.await(1, TimeUnit.MINUTES);
             timeStampStorage.add(timeStamp);
@@ -49,7 +52,8 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
     }
 
     @Override
-    public long getCountOfLastByChronoUnit(ChronoUnit unit) {
+    public long getCountOfLastByChronoUnit(@NotNull ChronoUnit unit) {
+        Objects.requireNonNull(unit, "unit must be not null");
         if (unit != ChronoUnit.MINUTES && unit != ChronoUnit.DAYS && unit != ChronoUnit.HOURS) {
             RuntimeException exception = new UnsupportedOperationException("Only last minute, hour and day is supported");
             logger.error("Not supported", exception);

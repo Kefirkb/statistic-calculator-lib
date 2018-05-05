@@ -3,7 +3,9 @@ package com.kefirkb.api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotNull;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 /**
  * @author Sergey
@@ -13,8 +15,8 @@ final class EventsTimeStampsAgentImpl implements EventsTimeStampsAgent {
     private static final Logger logger = LoggerFactory.getLogger(EventsTimeStampsAgentImpl.class);
     private final EventsTimeStampRepository repository;
 
-    EventsTimeStampsAgentImpl(EventsTimeStampRepository repository) {
-        this.repository = repository;
+    EventsTimeStampsAgentImpl(@NotNull EventsTimeStampRepository repository) {
+        this.repository = Objects.requireNonNull(repository);
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit;
 /**
  * @author Sergey
  * @since 04.05.2018.
- * <p>
+ *
  * Basic interface events repository
  * Currently package access
  */
