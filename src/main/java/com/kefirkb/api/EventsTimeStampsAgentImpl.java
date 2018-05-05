@@ -1,5 +1,8 @@
 package com.kefirkb.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -7,6 +10,7 @@ import java.time.temporal.ChronoUnit;
  * @since 04.05.2018.
  */
 final class EventsTimeStampsAgentImpl implements EventsTimeStampsAgent {
+    private static final Logger logger = LoggerFactory.getLogger(EventsTimeStampsAgentImpl.class);
     private final EventsTimeStampRepository repository;
 
     EventsTimeStampsAgentImpl(EventsTimeStampRepository repository) {
@@ -15,6 +19,7 @@ final class EventsTimeStampsAgentImpl implements EventsTimeStampsAgent {
 
     @Override
     public void considerEvent(long timeStamp) {
+        logger.debug("Considering timeStamp : {}", timeStamp);
         repository.store(timeStamp);
     }
 
@@ -33,7 +38,12 @@ final class EventsTimeStampsAgentImpl implements EventsTimeStampsAgent {
         return repository.getCountOfLastByChronoUnit(ChronoUnit.DAYS);
     }
 
-    public EventsTimeStampRepository getRepository() {
+    @Override
+    public void close() {
+        repository.close();
+    }
+
+    EventsTimeStampRepository getRepository() {
         return repository;
     }
 }

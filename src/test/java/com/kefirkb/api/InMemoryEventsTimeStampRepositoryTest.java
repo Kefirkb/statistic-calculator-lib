@@ -114,8 +114,4 @@ public class InMemoryEventsTimeStampRepositoryTest {
         assertEquals(8, repository.getContainerCount());
         repository.close();
     }
-
-    @Test
-    public void close() {
-    }
 }

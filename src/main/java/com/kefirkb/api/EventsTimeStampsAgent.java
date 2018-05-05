@@ -1,5 +1,6 @@
 package com.kefirkb.api;
 
+import java.io.Closeable;
 import java.time.Clock;
 
 /**
@@ -8,7 +9,7 @@ import java.time.Clock;
  *
  * Main interface for usage lib.
  */
-public interface EventsTimeStampsAgent {
+public interface EventsTimeStampsAgent extends Closeable{
 
     /**
      * Method to consider event
@@ -38,7 +39,15 @@ public interface EventsTimeStampsAgent {
         return new EventsTimeStampsAgentImpl(EventsTimeStampRepository.inMemoryRepository(Clock.systemUTC(), 5));
     }
 
+    /**
+     * Method for get instance
+     * @param clock use clock for calculate now timestamps
+     * @return instance of agent
+     */
     static EventsTimeStampsAgent instance(Clock clock) {
         return new EventsTimeStampsAgentImpl(EventsTimeStampRepository.inMemoryRepository(clock, 5));
     }
+
+    @Override
+    void close();
 }
