@@ -25,6 +25,7 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
     private final Clock clock;
 
+    private volatile CountDownLatch latchForStore = new CountDownLatch(0);
     private volatile CountDownLatch latchForDelete = new CountDownLatch(0);
 
     InMemoryEventsTimeStampRepository(@NotNull Clock clock, long clearingPeriod) {
@@ -44,11 +45,13 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
     public void store(@NotNull Long timeStamp) {
         Objects.requireNonNull(timeStamp, "timeStamp must be not null");
         try {
-            latchForDelete.await(1, TimeUnit.MINUTES);
+            latchForStore.await();
+            latchForDelete = new CountDownLatch(1);
             timeStampStorage.add(timeStamp);
         } catch (InterruptedException e) {
             logger.warn("Did not store. Thread was interrupted");
         }
+        latchForDelete.countDown();
     }
 
     @Override
@@ -81,37 +84,44 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
         };
     }
 
-    private synchronized long deleteIfBefore(Instant instant) {
-        // need to block access to timeStampStorage for store(Long timeStamp) method
-        if(latchForDelete.getCount() > 0) {
-            throw new IllegalStateException("This is not valid state. PLease, create an issue");
-        }
-        latchForDelete = new CountDownLatch(1);
-        Long lastTimeStamp = timeStampStorage.peek();
+    private synchronized long deleteIfBefore(Instant instant)  {
+        try {
+            latchForDelete.await();
+            // need to block access to timeStampStorage for store(Long timeStamp) method
+            if (latchForStore.getCount() > 0) {
+                throw new IllegalStateException("This is not valid state. PLease, create an issue");
+            }
+            latchForStore = new CountDownLatch(1);
+            Long lastTimeStamp = timeStampStorage.peek();
 
-        if (lastTimeStamp == null) {
+            if (lastTimeStamp == null) {
+                return 0;
+            }
+
+            if (Instant.ofEpochMilli(lastTimeStamp).isBefore(instant)) {
+                long count = timeStampStorage.size();
+                timeStampStorage.clear();
+                return count;
+            }
+
+            List<Long> savedBuffer = new ArrayList<>();
+            do {
+                savedBuffer.add(timeStampStorage.poll());
+                lastTimeStamp = timeStampStorage.peek();
+            }
+            while (lastTimeStamp != null && Instant.ofEpochMilli(lastTimeStamp).isAfter(instant));
+
+            long countOfDeleted = timeStampStorage.size();
+            timeStampStorage.clear();
+            timeStampStorage.addAll(savedBuffer);
+            // and now we can already store into queue
+            latchForStore.countDown();
+            return countOfDeleted;
+        } catch (InterruptedException e) {
+            logger.warn("Cleaning job was interrupted");
+            latchForStore.countDown();
             return 0;
         }
-
-        if (lastTimeStamp != null && Instant.ofEpochMilli(lastTimeStamp).isBefore(instant)) {
-            long count = timeStampStorage.size();
-            timeStampStorage.clear();
-            return count;
-        }
-
-        List<Long> savedBuffer = new ArrayList<>();
-        do {
-            savedBuffer.add(timeStampStorage.poll());
-            lastTimeStamp = timeStampStorage.peek();
-        }
-        while (lastTimeStamp != null && Instant.ofEpochMilli(lastTimeStamp).isAfter(instant));
-
-        long countOfDeleted = timeStampStorage.size();
-        timeStampStorage.clear();
-        timeStampStorage.addAll(savedBuffer);
-        // and now we can already store into queue
-        latchForDelete.countDown();
-        return countOfDeleted;
     }
 
     private synchronized long countBy(ChronoUnit unit, Clock clock) {
