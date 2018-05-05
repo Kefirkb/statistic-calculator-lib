@@ -1,5 +1,6 @@
 package com.kefirkb.api;
 
+import javax.validation.constraints.NotNull;
 import java.io.Closeable;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -17,7 +18,7 @@ interface EventsTimeStampRepository extends Closeable {
      *
      * @param timeStamp timeStamp in milliseconds since January 1, 1970, 00:00:00 GMT
      */
-    void store(Long timeStamp);
+    void store(@NotNull Long timeStamp);
 
     /**
      * Get count of events by chrono unit
@@ -25,7 +26,7 @@ interface EventsTimeStampRepository extends Closeable {
      * @param unit chrono unit of period
      * @return count of events
      */
-    long getCountOfLastByChronoUnit(ChronoUnit unit);
+    long getCountOfLastByChronoUnit(@NotNull ChronoUnit unit);
 
     @Override
     void close();
@@ -36,7 +37,8 @@ interface EventsTimeStampRepository extends Closeable {
      * @param clock use clock for calculate now timestamps
      * @return instance of repository
      */
-    static EventsTimeStampRepository inMemoryRepository(Clock clock) {
+    @NotNull
+    static EventsTimeStampRepository inMemoryRepository(@NotNull Clock clock) {
         return new InMemoryEventsTimeStampRepository(clock, false);
     }
 
@@ -47,7 +49,9 @@ interface EventsTimeStampRepository extends Closeable {
      * @param cleaningPeriod period for cleaning queue job. Every this time job will be executing and all timeStamps of previous day will be deleted
      * @return instance of repository
      */
-    static EventsTimeStampRepository inMemoryRepository(Clock clock, int cleaningPeriod) {
+    @NotNull
+    static EventsTimeStampRepository inMemoryRepository(@NotNull Clock clock, int cleaningPeriod) {
+        assert cleaningPeriod > 0;
         return new InMemoryEventsTimeStampRepository(clock, cleaningPeriod);
     }
 }

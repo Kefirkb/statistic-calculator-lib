@@ -1,5 +1,6 @@
 package com.kefirkb.api;
 
+import javax.validation.constraints.NotNull;
 import java.io.Closeable;
 import java.time.Clock;
 
@@ -35,6 +36,7 @@ public interface EventsTimeStampsAgent extends Closeable{
      */
     long countEventsByLastDay();
 
+    @NotNull
     static EventsTimeStampsAgent instance() {
         return new EventsTimeStampsAgentImpl(EventsTimeStampRepository.inMemoryRepository(Clock.systemUTC(), 5));
     }
@@ -44,7 +46,8 @@ public interface EventsTimeStampsAgent extends Closeable{
      * @param clock use clock for calculate now timestamps
      * @return instance of agent
      */
-    static EventsTimeStampsAgent instance(Clock clock) {
+    @NotNull
+    static EventsTimeStampsAgent instance(@NotNull Clock clock) {
         return new EventsTimeStampsAgentImpl(EventsTimeStampRepository.inMemoryRepository(clock, 5));
     }
 

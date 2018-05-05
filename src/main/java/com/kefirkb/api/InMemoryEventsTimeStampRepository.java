@@ -41,7 +41,7 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
     @Override
     public void store(Long timeStamp) {
         try {
-            latchForDelete.await();
+            latchForDelete.await(1, TimeUnit.MINUTES);
             timeStampStorage.add(timeStamp);
         } catch (InterruptedException e) {
             logger.warn("Did not store. Thread was interrupted");
@@ -79,6 +79,9 @@ final class InMemoryEventsTimeStampRepository implements EventsTimeStampReposito
 
     private synchronized long deleteIfBefore(Instant instant) {
         // need to block access to timeStampStorage for store(Long timeStamp) method
+        if(latchForDelete.getCount() > 0) {
+            throw new IllegalStateException("This is not valid state. PLease, create an issue");
+        }
         latchForDelete = new CountDownLatch(1);
         Long lastTimeStamp = timeStampStorage.peek();
 
