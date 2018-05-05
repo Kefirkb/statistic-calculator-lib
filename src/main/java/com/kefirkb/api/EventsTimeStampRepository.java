@@ -9,8 +9,9 @@ import java.time.temporal.ChronoUnit;
  * @since 04.05.2018.
  *
  * Basic interface events repository
+ * Currently package access
  */
-public interface EventsTimeStampRepository extends Closeable {
+interface EventsTimeStampRepository extends Closeable {
     /**
      * Store timeStamp of event
      * @param timeStamp timeStamp in milliseconds since January 1, 1970, 00:00:00 GMT
@@ -22,7 +23,7 @@ public interface EventsTimeStampRepository extends Closeable {
      * @param unit chrono unit of period
      * @return count of events
      */
-    long getCountOfLastByChronoUnit(ChronoUnit unit, Clock clock);
+    long getCountOfLastByChronoUnit(ChronoUnit unit);
 
     @Override
     void close();
@@ -31,7 +32,11 @@ public interface EventsTimeStampRepository extends Closeable {
      * In memory storage for timestamps
      * @return instance of repository
      */
-    static EventsTimeStampRepository inMemoryRepository() {
-        return new InMemoryEventsTimeStampRepository();
+    static EventsTimeStampRepository inMemoryRepository(Clock clock) {
+        return new InMemoryEventsTimeStampRepository(clock, false);
+    }
+
+    static EventsTimeStampRepository inMemoryRepository(Clock clock, int cleaningPeriod) {
+        return new InMemoryEventsTimeStampRepository(clock, cleaningPeriod);
     }
 }

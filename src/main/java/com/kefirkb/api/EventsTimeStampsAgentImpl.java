@@ -1,6 +1,5 @@
 package com.kefirkb.api;
 
-import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -9,10 +8,8 @@ import java.time.temporal.ChronoUnit;
  */
 final class EventsTimeStampsAgentImpl implements EventsTimeStampsAgent {
     private final EventsTimeStampRepository repository;
-    private final Clock clock;
 
-    EventsTimeStampsAgentImpl(Clock clock, EventsTimeStampRepository repository) {
-        this.clock = clock;
+    EventsTimeStampsAgentImpl(EventsTimeStampRepository repository) {
         this.repository = repository;
     }
 
@@ -23,16 +20,20 @@ final class EventsTimeStampsAgentImpl implements EventsTimeStampsAgent {
 
     @Override
     public long countEventsByLastMinute() {
-        return repository.getCountOfLastByChronoUnit(ChronoUnit.MINUTES, clock);
+        return repository.getCountOfLastByChronoUnit(ChronoUnit.MINUTES);
     }
 
     @Override
     public long countEventsByLastHour() {
-        return repository.getCountOfLastByChronoUnit(ChronoUnit.HOURS, clock);
+        return repository.getCountOfLastByChronoUnit(ChronoUnit.HOURS);
     }
 
     @Override
     public long countEventsByLastDay() {
-        return repository.getCountOfLastByChronoUnit(ChronoUnit.DAYS, clock);
+        return repository.getCountOfLastByChronoUnit(ChronoUnit.DAYS);
+    }
+
+    public EventsTimeStampRepository getRepository() {
+        return repository;
     }
 }

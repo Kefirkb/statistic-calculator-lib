@@ -34,7 +34,11 @@ public interface EventsTimeStampsAgent {
      */
     long countEventsByLastDay();
 
-    static EventsTimeStampsAgent instance(Clock clock, EventsTimeStampRepository repository) {
-        return new EventsTimeStampsAgentImpl(clock, repository);
+    static EventsTimeStampsAgent instance() {
+        return new EventsTimeStampsAgentImpl(EventsTimeStampRepository.inMemoryRepository(Clock.systemUTC(), 5));
+    }
+
+    static EventsTimeStampsAgent instance(Clock clock) {
+        return new EventsTimeStampsAgentImpl(EventsTimeStampRepository.inMemoryRepository(clock, 5));
     }
 }
